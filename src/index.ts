@@ -361,6 +361,13 @@ async function main() {
       }
 
       if (url.pathname === "/mcp" || url.pathname === "/") {
+        // Workaround: MCPize discovery doesn't send Accept headers,
+        // causing StreamableHTTP to return 406. Inject the required
+        // Accept header if missing so our transport handles it normally.
+        if (!req.headers.accept || !req.headers.accept.includes("text/event-stream")) {
+          req.headers.accept = "application/json;q=0.9, text/event-stream;q=0.8";
+        }
+
         // Collect request body
         const chunks: Buffer[] = [];
         for await (const chunk of req) {
