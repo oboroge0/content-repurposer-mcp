@@ -1,0 +1,35 @@
+{
+  "name": "@moneypj/mcp-content-repurposer",
+  "version": "0.1.0",
+  "description": "MCP Server that transforms long-form content into SNS posts, newsletters, video scripts, and more",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "mcp-content-repurposer": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts",
+    "start": "node dist/index.js",
+    "test": "tsx src/__tests__/index.test.ts"
+  },
+  "keywords": [
+    "mcp",
+    "content",
+    "repurpose",
+    "ai",
+    "sns",
+    "social-media",
+    "newsletter"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0",
+    "@types/node": "^22.0.0"
+  }
+}
