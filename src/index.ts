@@ -361,22 +361,33 @@ async function main() {
       }
 
       if (url.pathname === "/mcp" || url.pathname === "/") {
-        // Workaround: MCPize discovery doesn't send Accept headers,
-        // causing StreamableHTTP to return 406. Inject the required
-        // Accept header if missing so our transport handles it normally.
+        // Workaround: MCPize discovery doesn't send Accept headers
         if (!req.headers.accept || !req.headers.accept.includes("text/event-stream")) {
           req.headers.accept = "application/json;q=0.9, text/event-stream;q=0.8";
         }
 
-        // Collect request body
+        // Collect and parse request body
         const chunks: Buffer[] = [];
         for await (const chunk of req) {
           chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk);
         }
-        const body = Buffer.concat(chunks).toString();
-        (req as any).body = body ? JSON.parse(body) : undefined;
+        const rawBody = Buffer.concat(chunks).toString();
 
-        await transport.handleRequest(req as any, res);
+        let parsedBody: unknown;
+        try {
+          parsedBody = rawBody ? JSON.parse(rawBody) : undefined;
+        } catch {
+          res.writeHead(400, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({
+            jsonrpc: "2.0",
+            error: { code: -32700, message: "Parse error: malformed JSON" },
+            id: null,
+          }));
+          return;
+        }
+
+        // Pass parsed body as 3rd argument (correct API)
+        await transport.handleRequest(req as any, res, parsedBody);
         return;
       }
 
