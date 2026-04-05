@@ -347,7 +347,7 @@ async function main() {
     // HTTP mode for MCPize / cloud deployment
     const port = parseInt(process.env.PORT || "8080", 10);
     const transport = new StreamableHTTPServerTransport({
-      sessionIdGenerator: () => randomUUID(),
+      sessionIdGenerator: undefined, // Stateless mode for cloud/proxy environments
     });
     await server.connect(transport);
 
