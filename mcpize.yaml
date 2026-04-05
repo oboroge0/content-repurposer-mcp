@@ -1,0 +1,57 @@
+name: content-repurposer
+version: 1
+description: Transform long-form content into platform-optimized formats (X threads, Instagram, LinkedIn, newsletters, YouTube scripts, and more)
+
+runtime: typescript
+entry: dist/index.js
+
+build:
+  command: npm run build
+  install: npm install
+
+transport: stdio
+
+tools:
+  - name: list-formats
+    description: Lists all available content transformation formats
+  - name: repurpose
+    description: Transforms long-form content into a specific platform format
+  - name: repurpose-batch
+    description: Transforms content into multiple formats at once
+  - name: analyze-content
+    description: Analyzes content and recommends the best formats for repurposing
+
+pricing:
+  model: monthly
+  plans:
+    - name: free
+      price: 0
+      limits:
+        tools:
+          - list-formats
+          - repurpose
+          - analyze-content
+        formats:
+          - x-twitter
+          - blog-summary
+          - thread-japanese
+    - name: pro
+      price: 9.99
+      limits:
+        tools:
+          - list-formats
+          - repurpose
+          - repurpose-batch
+          - analyze-content
+        formats: all
+
+tags:
+  - content
+  - social-media
+  - repurpose
+  - marketing
+  - ai
+  - twitter
+  - linkedin
+  - newsletter
+  - youtube

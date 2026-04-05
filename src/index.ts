@@ -10,9 +10,11 @@
  * Pro tier: All 8 formats + custom tone + batch processing
  */
 
+import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
+import { randomUUID } from "node:crypto";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { z } from "zod";
 import { SUPPORTED_FORMATS, getPrompt, TRANSFORM_PROMPTS } from "./prompts.js";
 
@@ -339,8 +341,50 @@ server.registerTool(
 
 // --- Start server ---
 async function main() {
-  const transport = new StdioServerTransport();
-  await server.connect(transport);
+  const mode = process.env.MCPIZE || process.env.PORT ? "http" : "stdio";
+
+  if (mode === "http") {
+    // HTTP mode for MCPize / cloud deployment
+    const port = parseInt(process.env.PORT || "8080", 10);
+    const transport = new StreamableHTTPServerTransport({
+      sessionIdGenerator: () => randomUUID(),
+    });
+    await server.connect(transport);
+
+    const httpServer = createServer(async (req: IncomingMessage, res: ServerResponse) => {
+      const url = new URL(req.url || "/", `http://localhost:${port}`);
+
+      if (url.pathname === "/health") {
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ status: "ok" }));
+        return;
+      }
+
+      if (url.pathname === "/mcp" || url.pathname === "/") {
+        // Collect request body
+        const chunks: Buffer[] = [];
+        for await (const chunk of req) {
+          chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk);
+        }
+        const body = Buffer.concat(chunks).toString();
+        (req as any).body = body ? JSON.parse(body) : undefined;
+
+        await transport.handleRequest(req as any, res);
+        return;
+      }
+
+      res.writeHead(404);
+      res.end("Not found");
+    });
+
+    httpServer.listen(port, () => {
+      console.log(`Content Repurposer MCP Server running on http://0.0.0.0:${port}`);
+    });
+  } else {
+    // Stdio mode for local use
+    const transport = new StdioServerTransport();
+    await server.connect(transport);
+  }
 }
 
 main().catch((error) => {
