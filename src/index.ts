@@ -20,10 +20,16 @@ import { SUPPORTED_FORMATS, getPrompt, TRANSFORM_PROMPTS } from "./prompts.js";
 
 const FREE_FORMATS = ["x-twitter", "blog-summary", "thread-japanese"];
 
-const server = new McpServer({
-  name: "content-repurposer",
-  version: "0.1.0",
-});
+function createMcpServer(): McpServer {
+  const server = new McpServer({
+    name: "content-repurposer",
+    version: "0.1.0",
+  });
+  registerTools(server);
+  return server;
+}
+
+function registerTools(server: McpServer): void {
 
 // --- Tool 1: List available formats ---
 server.registerTool(
@@ -339,17 +345,16 @@ server.registerTool(
   }
 );
 
+} // end registerTools
+
 // --- Start server ---
 async function main() {
   const mode = process.env.MCPIZE || process.env.PORT ? "http" : "stdio";
 
   if (mode === "http") {
     // HTTP mode for MCPize / cloud deployment
+    // Each request gets a fresh server+transport (stateless per-request pattern)
     const port = parseInt(process.env.PORT || "8080", 10);
-    const transport = new StreamableHTTPServerTransport({
-      sessionIdGenerator: undefined, // Stateless mode for cloud/proxy environments
-    });
-    await server.connect(transport);
 
     const httpServer = createServer(async (req: IncomingMessage, res: ServerResponse) => {
       const url = new URL(req.url || "/", `http://localhost:${port}`);
@@ -386,8 +391,13 @@ async function main() {
           return;
         }
 
-        // Pass parsed body as 3rd argument (correct API)
-        await transport.handleRequest(req as any, res, parsedBody);
+        // Create a fresh server + transport per request (stateless)
+        const reqServer = createMcpServer();
+        const reqTransport = new StreamableHTTPServerTransport({
+          sessionIdGenerator: undefined,
+        });
+        await reqServer.connect(reqTransport);
+        await reqTransport.handleRequest(req as any, res, parsedBody);
         return;
       }
 
@@ -400,6 +410,7 @@ async function main() {
     });
   } else {
     // Stdio mode for local use
+    const server = createMcpServer();
     const transport = new StdioServerTransport();
     await server.connect(transport);
   }
@@ -410,7 +421,6 @@ main().catch((error) => {
   process.exit(1);
 });
 
-process.on("SIGINT", async () => {
-  await server.close();
+process.on("SIGINT", () => {
   process.exit(0);
 });

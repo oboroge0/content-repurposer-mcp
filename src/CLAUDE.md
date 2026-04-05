@@ -9,4 +9,10 @@
 |----|------|---|-------|------|
 | #1628 | 10:46 PM | 🟣 | Content Repurposer MCP Server: Production-Grade Multi-Platform Content Transformation Tool | ~480 |
 | #1627 | 10:45 PM | 🔴 | MCP Server Type Compatibility: CallToolResult Return Type Correction | ~392 |
+
+### Apr 5, 2026
+
+| ID | Time | T | Title | Read |
+|----|------|---|-------|------|
+| #1664 | 4:08 PM | 🔴 | Fixed handleRequest Argument Order: parsedBody as Third Parameter | ~808 |
 </claude-mem-context>
